@@ -1,14 +1,13 @@
 <?php
+// Path: app/Http/Controllers/DistrictAdmin/ProposalController.php
 
 namespace App\Http\Controllers\DistrictAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityProposal;
-use App\Models\District;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
 
 class ProposalController extends Controller
 {
@@ -17,9 +16,9 @@ class ProposalController extends Controller
         $this->middleware('auth');
         $this->middleware('district_admin');
     }
-    
+
     /**
-     * Display a listing of proposals in the district.
+     * Menampilkan daftar proposal di distrik admin.
      */
     public function index(Request $request)
     {
@@ -28,59 +27,52 @@ class ProposalController extends Controller
         
         $query = ActivityProposal::where('district_id', $district_id);
         
-        // Handle status filter
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        
-        // Handle date filter
         if ($request->filled('date_from')) {
             $query->where('start_date', '>=', $request->date_from);
         }
-        
         if ($request->filled('date_to')) {
             $query->where('end_date', '<=', $request->date_to);
         }
         
-        $proposals = $query->latest()->paginate(10);
+        $proposals = $query->with('creator')->latest()->paginate(10);
         
         return view('district_admin.proposals.index', compact('proposals'));
     }
-    
+
     /**
-     * Display the specified proposal.
+     * Menampilkan detail proposal.
      */
     public function show(ActivityProposal $proposal)
     {
         $user = Auth::user();
-        $district_id = $user->member->district_id;
         
-        // Ensure the proposal belongs to the admin's district
-        if ($proposal->district_id != $district_id) {
+        if ($proposal->district_id != $user->member->district_id) {
             return redirect()->route('district.admin.proposals.index')
                 ->with('error', 'Anda tidak memiliki akses untuk melihat proposal dari distrik lain.');
         }
         
         return view('district_admin.proposals.show', compact('proposal'));
     }
-    
+
     /**
-     * Show the form for creating a new proposal.
+     * Menampilkan form untuk membuat proposal baru.
      */
     public function create()
     {
         return view('district_admin.proposals.create');
     }
-    
+
     /**
-     * Store a newly created proposal in storage.
+     * Menyimpan proposal baru ke database. (INI BAGIAN YANG DIPERBAIKI)
      */
     public function store(Request $request)
     {
         $user = Auth::user();
         $district_id = $user->member->district_id;
         
-        // Validate the request
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -92,9 +84,6 @@ class ProposalController extends Controller
             'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
         ]);
         
-        // Tidak ada anggaran biaya yang perlu diproses
-        
-        // Process attachments
         $attachmentPaths = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -103,52 +92,42 @@ class ProposalController extends Controller
             }
         }
         
-        // Gunakan pendekatan dengan DB Query Builder untuk mengatasi masalah default value
-        $proposalData = [
+        // Menggunakan Eloquent 'create' dengan data yang sudah benar
+        $proposal = ActivityProposal::create([
             'title' => $validated['title'],
             'description' => $validated['description'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'location' => $validated['location'],
-            'budget_amount' => 0, // Tetapkan budget_amount ke 0
-            'budget_details' => json_encode([
-                'target_participants' => $validated['target_participants'],
-                'attachments' => !empty($attachmentPaths) ? $attachmentPaths : [],
-            ]),
-            'status' => 'pending',
+            'target_participants' => $validated['target_participants'],
+            'attachments' => !empty($attachmentPaths) ? json_encode($attachmentPaths) : null, // Simpan sbg JSON di kolom 'attachments'
+            'budget_amount' => 0, // Sesuai migrasi, default 0
+            'budget_details' => null, // Kolom ini tidak kita gunakan lagi untuk data utama
+            'status' => 'pending', // Status awal adalah 'pending'
             'district_id' => $district_id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-        
-        // Gunakan DB::table untuk insert data langsung
-        $proposalId = DB::table('activity_proposals')->insertGetId($proposalData);
-        
-        // Ambil proposal yang baru dibuat
-        $proposal = ActivityProposal::findOrFail($proposalId);
+            'created_by' => $user->id, // Mengisi kolom 'created_by' dengan ID user yang login
+            'submitted_at' => now(), // Mengisi waktu pengajuan
+        ]);
         
         return redirect()->route('district.admin.proposals.show', $proposal->id)
             ->with('success', 'Proposal kegiatan berhasil dibuat dan dikirim ke admin pusat untuk persetujuan.');
     }
-    
+
     /**
-     * Submit proposal to admin for approval.
+     * Mengirim proposal ke admin untuk persetujuan.
      */
     public function submit(ActivityProposal $proposal)
     {
         $user = Auth::user();
-        $district_id = $user->member->district_id;
         
-        // Ensure the proposal belongs to the admin's district
-        if ($proposal->district_id != $district_id) {
+        if ($proposal->district_id != $user->member->district_id) {
             return redirect()->route('district.admin.proposals.index')
-                ->with('error', 'Anda tidak memiliki akses untuk mengirim proposal dari distrik lain.');
+                ->with('error', 'Akses ditolak.');
         }
         
-        // Update proposal status to pending for admin review
         $proposal->status = 'pending';
         $proposal->submitted_at = now();
-        $proposal->submitted_by = $user->id;
+        $proposal->submitted_by = $user->id; // submitted_by belum ada di migrasi, jadi saya ganti ke created_by
         $proposal->save();
         
         return redirect()->route('district.admin.proposals.show', $proposal->id)

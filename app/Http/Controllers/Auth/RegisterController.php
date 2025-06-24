@@ -17,7 +17,7 @@ class RegisterController extends Controller
     public function create() 
     {
         $districts = District::all();
-        // Menggunakan view baru di folder auth
+        // Pastikan file view ini ada di: resources/views/auth/register.blade.php
         return view('auth.register', compact('districts'));
     }
 
@@ -39,7 +39,7 @@ class RegisterController extends Controller
 
         $registrationDate = now();
         $expiryDate = now()->addYears(5);
-        
+
         $member = Member::create([
             'member_id' => $member_id,
             'name' => $validated['name'],
@@ -58,7 +58,7 @@ class RegisterController extends Controller
             'approval_status' => 'pending',
             'registration_password' => $validated['password']
         ]);
-        
+
         return redirect()->route('register.success', $member->id);
     }
 
@@ -68,7 +68,7 @@ class RegisterController extends Controller
     public function success($id)
     {
         $member = Member::findOrFail($id);
-        // Menggunakan view baru di folder auth
+        // Pastikan file view ini ada di: resources/views/auth/success.blade.php
         return view('auth.success', compact('member'));
     }
 
@@ -78,6 +78,7 @@ class RegisterController extends Controller
     public function downloadKta($id)
     {
         $member = Member::with('district')->findOrFail($id);
+        // Pastikan file view ini ada: resources/views/anggota/kta-pdf.blade.php
         $pdf = Pdf::loadView('anggota.kta-pdf', compact('member'));
         return $pdf->download('KTA-' . $member->member_id . '.pdf');
     }
