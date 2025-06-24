@@ -97,7 +97,7 @@ class DashboardController extends Controller
             $user->password = Hash::make($request->password);
         }
 
-        $user->save();
+        $user->save;
 
         // Juga update nama di data member yang terkait
         if ($user->member) {

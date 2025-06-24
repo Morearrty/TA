@@ -11,7 +11,8 @@ use App\Http\Controllers\Admin\{
 };
 use App\Http\Controllers\Member\{
     DashboardController as MemberDashboardController,
-    ProfileController as MemberProfileController
+    ProfileController as MemberProfileController,
+    ProposalController as MemberProposalController
 };
 use App\Http\Controllers\DistrictAdmin\{
     DashboardController as DistrictAdminDashboardController,
@@ -20,7 +21,8 @@ use App\Http\Controllers\DistrictAdmin\{
 };
 use App\Http\Controllers\Auth\{
     AuthController,
-    ForgotPasswordController
+    ForgotPasswordController,
+    RegisterController
 };
 use App\Http\Controllers\WelcomeController;
 
@@ -29,13 +31,13 @@ Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
-    // Member Registration
-    Route::get('/daftar', [AnggotaController::class, 'daftar'])->name('anggota.daftar');
-    Route::post('/daftar', [AnggotaController::class, 'store'])->name('anggota.store');
-    Route::get('/sukses/{id}', [AnggotaController::class, 'success'])->name('anggota.success');
-    Route::get('/download-kta/{id}', [AnggotaController::class, 'downloadKta'])->name('anggota.download-kta');
+    // Member Registration (ROUTE BARU)
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
+    Route::get('/register/success/{id}', [RegisterController::class, 'success'])->name('register.success');
+    Route::get('/download-kta/{id}', [RegisterController::class, 'downloadKta'])->name('download-kta.public');
 
-    // Login
+    // Login & Password Reset
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/admin/login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login');
@@ -46,7 +48,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/email-sent', [ForgotPasswordController::class, 'emailSent'])->name('password.email.sent');
     Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
-});
+}); 
 
 // Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -56,13 +58,13 @@ Route::prefix('member')->name('member.')->middleware(['auth', 'member'])->group(
     Route::get('/dashboard', [MemberDashboardController::class, 'index'])->name('dashboard');
     
     // Profile Management
-    Route::prefix('profile')->group(function () {
-        Route::get('/', [MemberProfileController::class, 'index'])->name('profile');
-        Route::get('/edit', [MemberProfileController::class, 'edit'])->name('edit-profile');
-        Route::put('/update', [MemberProfileController::class, 'update'])->name('update-profile');
-        Route::post('/update-photo', [MemberProfileController::class, 'updatePhoto'])->name('update-photo');
-        Route::get('/download-kta', [MemberProfileController::class, 'downloadKta'])->name('download-kta');
-    });
+    Route::prefix('profile')->name('profile.')->group(function () {
+            Route::get('/', [MemberProfileController::class, 'index'])->name('index');
+            Route::get('/edit', [MemberProfileController::class, 'edit'])->name('edit');
+            Route::put('/update', [MemberProfileController::class, 'update'])->name('update');
+            Route::post('/update-photo', [MemberProfileController::class, 'updatePhoto'])->name('update-photo');
+            Route::get('/download-kta', [MemberProfileController::class, 'downloadKta'])->name('download-kta');
+        });
 });
 
 //admin district

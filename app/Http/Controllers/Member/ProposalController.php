@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\District;
+namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityProposal;
@@ -20,30 +20,20 @@ class ProposalController extends Controller
      */
     public function index()
     {
+       
         $user = Auth::user();
-        
-        // Get the district ID from the user relationship or admin selection
-        if ($user->isAdmin()) {
-            $district_id = session('selected_district_id');
-            if (!$district_id) {
-                return redirect()->route('admin.districts.index')
-                    ->with('error', 'Please select a district first.');
-            }
-        } else {
-            // Regular user - get district from member relationship
-            if (!$user->member || !$user->member->district_id) {
-                return redirect()->route('member.dashboard')
-                    ->with('error', 'You are not associated with any district.');
-            }
-            $district_id = $user->member->district_id;
-        }
-        
-        $district = District::findOrFail($district_id);
+        $district_id = $user->member->district_id;
+
         $proposals = ActivityProposal::where('district_id', $district_id)
+            ->where('created_by', $user->id) // Hanya proposal yang dibuat oleh user ini
             ->latest()
             ->paginate(10);
+
+        // UBAH PATH VIEW
+        return view('member.proposals.index', compact('proposals'));
+    
+       
             
-        return view('district.proposals.index', compact('district', 'proposals'));
     }
     
     /**
