@@ -1,4 +1,5 @@
 <?php
+// Path: app/Http/Controllers/Auth/RegisterController.php
 
 namespace App\Http\Controllers\Auth;
 
@@ -58,7 +59,6 @@ class RegisterController extends Controller
             'registration_password' => $validated['password']
         ]);
         
-        // Mengarahkan ke route success yang baru
         return redirect()->route('register.success', $member->id);
     }
 
@@ -73,14 +73,12 @@ class RegisterController extends Controller
     }
 
     /**
-     * Fungsi download KTA bisa tetap di sini atau dipindah
-     * ke controller lain jika diperlukan.
+     * Download KTA setelah pendaftaran.
      */
     public function downloadKta($id)
     {
         $member = Member::with('district')->findOrFail($id);
-        
-        $pdf = PDF::loadView('anggota.kta-pdf', compact('member'));
+        $pdf = Pdf::loadView('anggota.kta-pdf', compact('member'));
         return $pdf->download('KTA-' . $member->member_id . '.pdf');
     }
 }
