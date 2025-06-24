@@ -333,9 +333,9 @@
                     <div class="menu-icon"><i class="bi bi-plus-circle"></i></div>
                     <span>Buat Proposal</span>
                 </a>
-                <a href="{{ route('member.profile') }}" class="menu-item {{ request()->routeIs('member.profile') ? 'active' : '' }}">
-                    <div class="menu-icon"><i class="bi bi-person"></i></div>
-                    <span>Profil Saya</span>
+               <a href="{{ route('district.admin.profile') }}" class="menu-item {{ request()->routeIs('district.admin.profile*') ? 'active' : '' }}">
+                   <div class="menu-icon"><i class="bi bi-person"></i></div>
+                   <span>Profil Saya</span>
                 </a>
                 <div class="mt-auto">
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -368,9 +368,9 @@
                         <i class="bi bi-chevron-down ms-1"></i>
                     </button>
                     <div class="dropdown-content" id="profile-dropdown">
-                        <a href="{{ route('member.profile') }}" class="dropdown-item">
-                            <i class="bi bi-person dropdown-icon"></i> Profil Saya
-                        </a>
+                    <a href="{{ route('district.admin.profile') }}" class="dropdown-item">
+                        <i class="bi bi-person dropdown-icon"></i> Profil Saya
+                    </a>
                         <hr class="dropdown-divider">
                         <form id="dropdown-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                             @csrf

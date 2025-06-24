@@ -65,7 +65,7 @@ Route::prefix('member')->name('member.')->middleware(['auth', 'member'])->group(
     });
 });
 
-// District Admin Routes
+//admin district
 Route::prefix('district-admin')->name('district.admin.')->middleware(['auth', 'district_admin'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DistrictAdminDashboardController::class, 'index'])->name('dashboard');
@@ -78,8 +78,10 @@ Route::prefix('district-admin')->name('district.admin.')->middleware(['auth', 'd
     Route::resource('proposals', DistrictAdminProposalController::class)->except(['edit', 'update', 'destroy']);
     Route::put('/proposals/{proposal}/submit', [DistrictAdminProposalController::class, 'submit'])->name('proposals.submit');
 
-    // Tambahkan route profil admin distrik
-    Route::get('/profile', [DistrictAdminDashboardController::class, 'profile'])->name('district.admin.profile');
+    // Profile Management (LENGKAPI BAGIAN INI)
+    Route::get('/profile', [DistrictAdminDashboardController::class, 'profile'])->name('profile');
+    Route::get('/profile/edit', [DistrictAdminDashboardController::class, 'editProfile'])->name('profile.edit');
+    Route::put('/profile/update', [DistrictAdminDashboardController::class, 'updateProfile'])->name('profile.update');
 });
 
 // Admin Routes
